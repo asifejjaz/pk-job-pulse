@@ -2,6 +2,8 @@
 
 Daily statistics on who is hiring in Pakistan: by sector, seniority, city, remote share and employer. Built from every new Pakistan job post on Indeed and LinkedIn, scanned once a day.
 
+**Live dashboard: https://cognitionsync.com/pulse/** (updated daily)
+
 This is a market statistics tool, not a job board. The live site publishes counts, shares and rankings only. Individual postings and links are never published.
 
 **Who it is for:** fresh graduates picking a first direction, experienced people weighing a career switch, and anyone who wants numbers instead of hunches about the Pakistani job market.
