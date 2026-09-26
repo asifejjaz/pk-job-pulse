@@ -1,0 +1,10 @@
+# the raw posting store and scan logs never leave the machine
+data/
+*.db
+*.log
+# generated stats are published to the site, not committed
+site/data/*.json
+__pycache__/
+*.pyc
+.venv/
+.claude/
