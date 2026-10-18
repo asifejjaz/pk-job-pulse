@@ -43,7 +43,8 @@ WINDOWS = {"7d": 7, "30d": 30, "all": None}
 
 
 def company_key(name: str) -> str:
-    k = re.sub(r"[^a-z0-9& ]+", " ", (name or "").lower())
+    # \w keeps letters of every script, so a name written in Urdu or Arabic still gets a key
+    k = re.sub(r"[^\w& ]+|_", " ", (name or "").lower())
     k = COMPANY_SUFFIX.sub(" ", k)
     return re.sub(r"\s+", " ", k).strip()
 
@@ -76,17 +77,23 @@ def pct(n, d):
     return round(100.0 * n / d, 1) if d else 0.0
 
 
-def per_day_change(rows, days, end: date):
-    """Per scan day volume, last 7 calendar days vs the 7 before.
+def per_day_change(rows, status, end: date):
+    """Latest 7 days against the 7 before, same weekdays only.
 
-    Normalizing by scan days matters: skipped scan days otherwise read as a crash."""
-    def window(a, b):
-        sel = [r for r in rows if a <= r["day"] <= b]
-        nd = len({d for d in days if a <= d <= b})
-        return (len(sel) / nd if nd else None), nd
-    cur, n1 = window((end - timedelta(days=6)).isoformat(), end.isoformat())
-    prev, n2 = window((end - timedelta(days=13)).isoformat(), (end - timedelta(days=7)).isoformat())
-    if not cur or not prev:
+    A day is compared with the day one week earlier, and only when both had a full
+    scan. Skipped or partial scan days therefore drop out instead of reading as a
+    crash, and a week that lost its busy weekdays is not set against one that kept
+    them. At least 3 matching weekdays are needed, otherwise there is no figure."""
+    per = Counter(r["day"] for r in rows)
+    cur = prev = pairs = 0
+    for back in range(7):
+        a = (end - timedelta(days=back)).isoformat()
+        b = (end - timedelta(days=back + 7)).isoformat()
+        if status.get(a) == "ok" and status.get(b) == "ok":
+            pairs += 1
+            cur += per[a]
+            prev += per[b]
+    if pairs < 3 or not cur or not prev:
         return None
     return round(100.0 * (cur - prev) / prev, 1)
 
@@ -129,7 +136,7 @@ def recruiter_table(rows, limit=15):
     return [dict(name=names[k], posts=n) for k, n in c.most_common(limit)]
 
 
-def sector_block(rows, days, end, all_rows, all_days):
+def sector_block(rows, days, end, all_rows, status):
     by = defaultdict(list)
     for r in rows:
         by[r["sector"]].append(r)
@@ -144,7 +151,7 @@ def sector_block(rows, days, end, all_rows, all_days):
             senior=pct(sum(r["seniority"] in SENIOR_LEVELS for r in rs), n),
             remote=pct(sum(r["remote"] for r in rs), n),
             ai=pct(sum(bool(AI_TITLE.search(r["title"])) for r in rs), n),
-            change=per_day_change([r for r in all_rows if r["sector"] == sec], all_days, end),
+            change=per_day_change([r for r in all_rows if r["sector"] == sec], status, end),
             titles=top_titles(rs, 6),
             companies=[[d["name"], d["posts"]] for d in company_table(rs, 6)],
             cities=[[c, k] for c, k in Counter(r["city"] for r in rs).most_common(5)],
@@ -154,10 +161,10 @@ def sector_block(rows, days, end, all_rows, all_days):
     return out
 
 
-def window_stats(rows, days, end, n_days):
+def window_stats(rows, days, end, n_days, status):
     # Week over week change always compares the latest 7 days with the 7 before,
     # so it needs the full history even when the window itself is shorter.
-    all_rows, all_days = rows, days
+    all_rows = rows
     if n_days:
         start = (end - timedelta(days=n_days - 1)).isoformat()
         rows = [r for r in rows if r["day"] >= start]
@@ -182,8 +189,8 @@ def window_stats(rows, days, end, n_days):
         remote=pct(sum(r["remote"] for r in rows), total),
         tech=pct(sum(r["sector"] in TECH_SECTORS for r in rows), total),
         entry=pct(sum(r["seniority"] in ENTRY_LEVELS for r in rows), total),
-        change=per_day_change(all_rows, all_days, end),
-        sectors=sector_block(rows, days, end, all_rows, all_days),
+        change=per_day_change(all_rows, status, end),
+        sectors=sector_block(rows, days, end, all_rows, status),
         seniority=[[s, n] for s, n in Counter(r["seniority"] for r in rows).most_common()],
         cities=city_rows,
         employers=company_table(rows, 25),
@@ -193,6 +200,68 @@ def window_stats(rows, days, end, n_days):
         titles=top_titles(rows, 15),
         ai=dict(posts=len(ai_rows), share=pct(len(ai_rows), total),
                 sectors=[[s, n] for s, n in Counter(r["sector"] for r in ai_rows).most_common(8)]),
+    )
+
+
+def norm_title(t: str) -> str:
+    return re.sub(r"\s+", " ", (t or "").strip().lower())
+
+
+def build_cube(rows, daily):
+    """Counts by day, company, sector, level, city, remote flag and common title.
+
+    The site filters and drills down on this in the browser, so every figure on the
+    page comes from one table and always adds up. It holds counts only. A job title is
+    kept only when at least 3 posts from at least 2 companies share it, so a single
+    posting can never be read back out of the file; every other title becomes "other"."""
+    day_ix = {d["day"]: i for i, d in enumerate(daily)}
+
+    names = defaultdict(Counter)
+    for r in rows:
+        names[company_key(r["company"])][r["company"]] += 1
+    names.pop("", None)
+    volume = Counter(company_key(r["company"]) for r in rows)
+    keys = sorted(names, key=lambda k: (-volume[k], k))
+    companies = [["", 0]]  # index 0: posts that name no company
+    for k in keys:
+        name = names[k].most_common(1)[0][0]
+        companies.append([name, 1 if is_recruiter(name) else 0])
+    co_ix = {k: i + 1 for i, k in enumerate(keys)}
+    co_ix[""] = 0
+
+    def index(values):
+        order = [v for v, _ in Counter(values).most_common()]
+        return order, {v: i for i, v in enumerate(order)}
+
+    sectors, sec_ix = index(r["sector"] for r in rows)
+    levels, lvl_ix = index(r["seniority"] for r in rows)
+    cities, city_ix = index(r["city"] for r in rows)
+
+    t_posts, t_cos = Counter(), defaultdict(set)
+    for r in rows:
+        t = norm_title(r["title"])
+        if t:
+            t_posts[t] += 1
+            t_cos[t].add(company_key(r["company"]))
+    common = [t for t, n in t_posts.most_common() if n >= 3 and len(t_cos[t]) >= 2]
+    titles = [""] + common  # index 0: any title too rare to publish
+    title_ix = {t: i + 1 for i, t in enumerate(common)}
+
+    cells = Counter()
+    for r in rows:
+        flags = (1 if r["remote"] else 0) | (2 if AI_TITLE.search(r["title"]) else 0)
+        cells[(day_ix[r["day"]], co_ix[company_key(r["company"])], sec_ix[r["sector"]],
+               lvl_ix[r["seniority"]], city_ix[r["city"]], flags,
+               title_ix.get(norm_title(r["title"]), 0))] += 1
+    ordered = sorted(cells.items())
+    cols = list(zip(*[k + (n,) for k, n in ordered])) if ordered else [[]] * 8
+    return dict(
+        days=[[d["day"], d["status"]] for d in daily],
+        companies=companies, sectors=sectors, levels=levels, cities=cities, titles=titles,
+        tech=[sec_ix[s] for s in TECH_SECTORS if s in sec_ix],
+        entry=[lvl_ix[s] for s in ENTRY_LEVELS if s in lvl_ix],
+        senior=[lvl_ix[s] for s in SENIOR_LEVELS if s in lvl_ix],
+        rows=dict(zip(["d", "c", "s", "l", "y", "f", "t", "n"], [list(c) for c in cols])),
     )
 
 
@@ -218,9 +287,11 @@ def build(db: str):
         daily.append(dict(day=k, posts=len(rs), remote=sum(r["remote"] for r in rs),
                           tech=sum(r["sector"] in TECH_SECTORS for r in rs),
                           sales=sum(r["sector"] == "Sales & Business Development" for r in rs),
-                          companies=len({company_key(r["company"]) for r in rs}),
+                          companies=len({company_key(r["company"]) for r in rs} - {""}),
                           status=status, weekday=d.strftime("%a")))
         d += timedelta(days=1)
+
+    status = {x["day"]: x["status"] for x in daily}
 
     first_day = {}
     for r in rows:
@@ -244,13 +315,15 @@ def build(db: str):
         total_companies=len({company_key(r["company"]) for r in rows if r["company"]}),
         scan_days=len(days),
         daily=daily,
-        windows={**{k: window_stats(rows, days, end, n) for k, n in WINDOWS.items()},
+        windows={**{k: window_stats(rows, days, end, n, status) for k, n in WINDOWS.items()},
                  **{m: window_stats([r for r in rows if r["day"].startswith(m)],
                                     [x for x in days if x.startswith(m)],
-                                    date.fromisoformat(max(x for x in days if x.startswith(m))), None)
+                                    date.fromisoformat(max(x for x in days if x.startswith(m))), None,
+                                    status)
                     for m in sorted({x[:7] for x in days})}},
         months=sorted({x[:7] for x in days}),
         newcomers=new_rows,
+        cube=build_cube(rows, daily),
     )
 
 

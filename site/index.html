@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pakistan Job Pulse</title>
-<meta name="description" content="Daily statistics on who is hiring in Pakistan, by sector, seniority, city and remote share. Built from every new Indeed and LinkedIn posting. Numbers, not listings.">
+<meta name="description" content="Daily statistics on who is hiring in Pakistan: sectors, companies and their hiring timelines, seniority, city and remote share. Built from every new Indeed and LinkedIn posting. Numbers, not listings.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -37,19 +37,37 @@
   header { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
   .kicker { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
   h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 44px; line-height: 1.05; letter-spacing: -0.02em; margin-top: 8px; }
-  .lede { color: var(--ink-2); max-width: 640px; margin-top: 10px; font-size: 16px; }
+  .lede { color: var(--ink-2); max-width: 680px; margin-top: 10px; font-size: 16px; }
   h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 26px; letter-spacing: -0.01em; }
   .sub { color: var(--ink-2); font-size: 14px; margin-top: 4px; }
+  a { color: inherit; }
   .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 10px; padding: 3px; background: var(--card); gap: 2px; flex-wrap: wrap; }
   .seg button { font: inherit; font-size: 13px; border: 0; background: transparent; color: var(--ink-2); padding: 6px 12px; border-radius: 7px; cursor: pointer; }
   .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
-  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .theme { font: inherit; font-size: 13px; border: 1px solid var(--rule); background: var(--card); color: var(--ink-2); border-radius: 10px; padding: 7px 12px; cursor: pointer; }
+  .theme, .btn { font: inherit; font-size: 13px; border: 1px solid var(--rule); background: var(--card); color: var(--ink-2); border-radius: 10px; padding: 7px 12px; cursor: pointer; }
+  .btn:hover, .theme:hover { color: var(--ink); border-color: var(--ink-3); }
 
-  .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
-  .kpi { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; }
+  /* filters */
+  .filters { margin-top: 26px; background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .frow { display: flex; gap: 10px 14px; align-items: flex-end; flex-wrap: wrap; }
+  .fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .fld > span { font-size: 11px; color: var(--ink-3); font-family: 'JetBrains Mono', monospace; letter-spacing: .05em; text-transform: uppercase; }
+  .fld select, .fld input { font: inherit; font-size: 13px; color: var(--ink); background: var(--bg); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 9px; min-width: 0; max-width: 100%; }
+  .fld select { max-width: 210px; }
+  .fld input[type="search"] { width: 200px; }
+  .fld select:focus, .fld input:focus, .btn:focus-visible, .seg button:focus-visible, .tabs button:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .dates { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-3); }
+  .showing { font-size: 13px; color: var(--ink-2); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--rule); padding-top: 10px; }
+  .showing b { color: var(--ink); font-weight: 600; }
+  .showing .btn { padding: 4px 10px; font-size: 12px; }
+  body.company .only-main { display: none !important; }
+  body:not(.company) .only-company { display: none !important; }
+
+  .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+  .kpi { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; min-width: 0; }
   .kpi .l { font-size: 12px; color: var(--ink-3); }
-  .kpi .v { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin-top: 4px; }
+  .kpi .v { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kpi .v.sm { font-size: 22px; padding: 5px 0 6px; }
   .kpi .h { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
 
   section.card { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 24px; margin-top: 20px; min-width: 0; }
@@ -58,38 +76,65 @@
   .grid2 > section.card { margin-top: 0; }
   .row2 { margin-top: 20px; }
 
+  /* tabs */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--rule); margin: -6px 0 20px; }
+  .tabs button { font: inherit; font-family: 'Fraunces', serif; font-weight: 600; font-size: 22px; letter-spacing: -0.01em; border: 0; background: transparent; color: var(--ink-3); padding: 8px 14px 12px 0; margin-right: 18px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  .tabs button small { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 12px; color: var(--ink-3); margin-left: 6px; letter-spacing: 0; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--blue); }
+
   /* daily chart */
   .daily { position: relative; height: 220px; display: flex; align-items: flex-end; gap: 3px; border-bottom: 1px solid var(--ink-3); margin-left: 40px; }
-  .daily .col { flex: 1; height: 100%; display: flex; align-items: flex-end; position: relative; cursor: default; }
+  .daily .col { flex: 1; height: 100%; display: flex; align-items: flex-end; position: relative; cursor: default; min-width: 0; }
   .daily .col .b { width: 100%; border-radius: 4px 4px 0 0; background: var(--blue); }
   .daily .col.partial .b { background: repeating-linear-gradient(135deg, var(--blue-soft) 0 4px, transparent 4px 7px); outline: 1px solid var(--blue-soft); outline-offset: -1px; }
   .daily .col.missing .b { height: 100% !important; background: transparent; border: 1px dashed var(--rule); border-bottom: 0; }
   .daily .col:hover .b { filter: brightness(1.12); }
   .xlab { display: flex; gap: 3px; margin-top: 6px; margin-left: 40px; }
-  .xlab span { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); text-align: center; overflow: hidden; white-space: nowrap; }
+  .xlab span { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); display: flex; justify-content: center; white-space: nowrap; min-width: 0; }
   .legend { display: flex; gap: 18px; font-size: 12px; color: var(--ink-2); margin-top: 12px; flex-wrap: wrap; }
   .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
   .gridline { position: absolute; left: 0; right: 0; border-top: 1px solid var(--rule); pointer-events: none; }
   .gridline span { position: absolute; left: -40px; width: 34px; text-align: right; top: -7px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); }
 
-  /* compass table */
+  /* tables */
   table { width: 100%; border-collapse: collapse; }
-  th { text-align: right; font-size: 12px; font-weight: 500; color: var(--ink-3); padding: 8px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; cursor: pointer; user-select: none; }
-  th:first-child, td:first-child { text-align: left; }
+  th { text-align: right; font-size: 12px; font-weight: 500; color: var(--ink-3); padding: 8px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; user-select: none; }
+  th.sortable { cursor: pointer; }
+  th.sortable:hover { color: var(--ink-2); }
+  th.l, td.l, th:first-child, td:first-child { text-align: left; }
   th.sorted { color: var(--ink); }
   td { padding: 9px 10px; border-bottom: 1px solid var(--rule); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  tbody tr { cursor: pointer; }
-  tbody tr:hover { background: var(--track); }
+  tbody tr.click { cursor: pointer; }
+  tbody tr.click:hover { background: var(--track); }
   tbody tr.sel { background: var(--track); box-shadow: inset 3px 0 0 var(--blue); }
   td .cell { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
   td .mini { width: 56px; height: 6px; background: var(--track); border-radius: 3px; overflow: hidden; }
   td .mini i { display: block; height: 100%; background: var(--blue); border-radius: 0 3px 3px 0; }
+  td.rank { color: var(--ink-3); font-family: 'JetBrains Mono', monospace; font-size: 12px; width: 36px; }
+  td.co { max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+  td.co a { font-weight: 500; text-decoration: none; }
+  td.co a:hover { text-decoration: underline; }
+  td.co small { color: var(--ink-3); font-size: 12px; margin-left: 8px; }
   .chg.up { color: var(--up); } .chg.down { color: var(--down); } .chg.flat { color: var(--ink-3); }
+  .chg.thin { opacity: .55; }
   .muted { color: var(--ink-3); }
   .tscroll { overflow-x: auto; }
+  .more { margin-top: 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--ink-3); }
 
-  /* detail */
-  .detail { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--rule); }
+  /* who hired when */
+  .strip { display: inline-flex; width: 190px; height: 16px; gap: 1px; vertical-align: middle; }
+  .strip i { flex: 1; background: var(--track); border-radius: 1px; min-width: 0; }
+  .strip i.a { background: var(--blue); }
+  .strip i.m { background: transparent; outline: 1px dashed var(--gray); outline-offset: -1px; }
+  .tag { display: inline-block; font-size: 11px; line-height: 1.5; padding: 0 7px; border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-2); margin-left: 8px; font-weight: 400; vertical-align: 1px; }
+  .tag.new { border-color: var(--up); color: var(--up); }
+  .tag.steady { border-color: var(--blue); color: var(--blue); }
+  .tag.burst { border-color: var(--orange); color: var(--orange); }
+
+  /* drill down */
+  .drill { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--rule); }
+  .drill h3.t { font-family: 'Fraunces', serif; font-weight: 600; font-size: 21px; letter-spacing: -0.01em; }
+  .detail { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 28px; margin-top: 22px; }
   .detail h3 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
   .detail ol { list-style: none; font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 5px; }
   .detail li { display: flex; justify-content: space-between; gap: 10px; }
@@ -101,20 +146,24 @@
   .bl .r { display: grid; grid-template-columns: minmax(120px, 210px) 1fr 44px; gap: 12px; align-items: center; font-size: 13px; }
   .bl .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
   .bl .n small { color: var(--ink-3); font-size: 11px; margin-left: 6px; }
+  .bl .n a { text-decoration: none; } .bl .n a:hover { text-decoration: underline; }
   .bl .t { height: 14px; position: relative; }
   .bl .t i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; background: var(--blue); }
   .bl .t i.o { background: var(--orange); }
   .bl .t i.g { background: var(--gray); }
   .bl .v { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-2); text-align: right; }
 
-  .pill { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-2); margin-left: 6px; }
   .note { font-size: 12px; color: var(--ink-3); margin-top: 12px; }
+  .read { font-size: 15px; color: var(--ink); margin-top: 16px; padding-left: 14px; border-left: 3px solid var(--ink); max-width: 760px; }
+  .back { display: inline-block; font-size: 13px; color: var(--ink-2); text-decoration: none; margin-top: 26px; }
+  .back:hover { color: var(--ink); }
+  .cohead h1 { font-size: 38px; }
   .method { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 28px; font-size: 14px; color: var(--ink-2); }
   .method b { display: block; font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
   footer { margin-top: 40px; font-size: 13px; color: var(--ink-3); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
   footer a { color: var(--ink-2); }
 
-  #tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12px; line-height: 1.5; padding: 8px 10px; border-radius: 8px; opacity: 0; transition: opacity .08s; z-index: 10; max-width: 240px; }
+  #tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12px; line-height: 1.5; padding: 8px 10px; border-radius: 8px; opacity: 0; transition: opacity .08s; z-index: 10; max-width: 260px; }
   #tip b { font-weight: 600; }
 
   @media (max-width: 900px) {
@@ -125,118 +174,340 @@
   }
   @media (max-width: 560px) {
     .wrap { padding: 28px 16px 60px; }
-    h1 { font-size: 34px; }
+    h1 { font-size: 34px; } .cohead h1 { font-size: 30px; }
     .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .kpi .v { font-size: 26px; }
+    .kpi .v { font-size: 26px; } .kpi .v.sm { font-size: 19px; }
     .detail, .method { grid-template-columns: 1fr; }
     section.card { padding: 18px; }
     .bl .r { grid-template-columns: minmax(100px, 140px) 1fr 40px; }
     .daily { gap: 1px; } .xlab { gap: 1px; }
+    .tabs button { font-size: 19px; margin-right: 8px; }
+    .fld { flex: 1 1 44%; } .fld select, .fld input[type="search"] { width: 100%; max-width: none; }
+    .frow:first-child .fld { flex: 1 1 100%; } .dates input { flex: 1; }
+    .strip { width: 130px; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
+  <header class="only-main">
     <div>
       <div class="kicker">Pakistan Job Pulse</div>
       <h1>Who is hiring in Pakistan, in numbers.</h1>
-      <p class="lede">Every new job post on Indeed and LinkedIn in Pakistan, scanned daily and turned into statistics. Use it to pick a direction, plan a career switch, or check a hunch. This site shows numbers, not job listings.</p>
+      <p class="lede">Every new job post on Indeed and LinkedIn in Pakistan, scanned daily and turned into statistics. See which sectors and companies are hiring, when they post, and where to point your next application. This site shows numbers, not job listings.</p>
     </div>
     <div class="controls">
-      <div class="seg" id="win" role="group" aria-label="Time window"></div>
-      <button class="theme" id="theme" type="button">Theme</button>
+      <button class="theme" data-theme-btn type="button">Theme</button>
     </div>
   </header>
 
-  <div class="kpis" id="kpis"></div>
+  <div class="only-company cohead">
+    <a class="back" href="#/companies">← Back to all companies</a>
+    <div class="kicker" style="margin-top:18px">Company profile · Pakistan Job Pulse</div>
+    <h1 id="coName"></h1>
+    <p class="lede" id="coLede"></p>
+  </div>
 
-  <section class="card">
-    <div class="head">
-      <div><h2>Posts per day</h2><p class="sub">New unique postings first seen each day. Weekends dip; hatched bars are partial scans.</p></div>
+  <div class="filters" id="filters">
+    <div class="frow">
+      <div class="fld"><span>Period</span><div class="seg" id="win" role="group" aria-label="Period"></div></div>
+      <div class="fld"><span>Exact dates</span>
+        <div class="dates"><input type="date" id="dFrom" aria-label="From date"> to <input type="date" id="dTo" aria-label="To date"></div>
+      </div>
     </div>
-    <div class="daily" id="daily"></div>
-    <div class="xlab" id="xlab"></div>
-    <div class="legend">
-      <span><i style="background:var(--blue)"></i>Full scan</span>
-      <span><i style="background:repeating-linear-gradient(135deg,var(--blue-soft) 0 3px,transparent 3px 5px);outline:1px solid var(--blue-soft)"></i>Partial scan</span>
-      <span><i style="border:1px dashed var(--ink-3)"></i>No scan that day</span>
+    <div class="frow only-main">
+      <label class="fld"><span>Sector</span><select id="fSector"></select></label>
+      <label class="fld"><span>City</span><select id="fCity"></select></label>
+      <label class="fld"><span>Level</span><select id="fLevel">
+        <option value="">All levels</option><option value="entry">Entry level</option>
+        <option value="mid">Mid level or not stated</option><option value="senior">Senior, manager, head</option></select></label>
+      <label class="fld"><span>Work mode</span><select id="fMode">
+        <option value="all">Remote and on site</option><option value="remote">Remote only</option><option value="onsite">On site only</option></select></label>
+      <label class="fld"><span>Posted by</span><select id="fPoster">
+        <option value="all">Everyone</option><option value="direct">Direct employers</option><option value="recruiter">Recruiters and agencies</option></select></label>
+      <label class="fld"><span>Company name</span><input type="search" id="fQ" placeholder="Type a company name" list="coList" autocomplete="off"></label>
+      <datalist id="coList"></datalist>
     </div>
-  </section>
+    <div class="showing" id="showing"></div>
+  </div>
 
-  <section class="card">
-    <div class="head">
-      <div><h2>Career compass</h2><p class="sub">Every sector side by side. Pick what matters to you and the table reorders. Click a row for its top titles, employers and cities.</p></div>
-      <div class="seg" id="persona" role="group" aria-label="Sort by"></div>
-    </div>
-    <div class="tscroll"><table id="compass"><thead></thead><tbody></tbody></table></div>
-    <div class="detail" id="detail"></div>
-    <p class="note">Change compares posts per scan day in the latest 7 days with the 7 days before, so skipped scan days do not read as a drop. Entry level means junior, associate, trainee or intern in the title; senior includes lead, manager and head roles.</p>
-  </section>
+  <!-- main dashboard -->
+  <div class="only-main">
+    <div class="kpis" id="kpis"></div>
 
-  <div class="grid2 row2">
     <section class="card">
       <div class="head">
-        <div><h2>Top hiring companies</h2><p class="sub">Distinct postings. Recruiters and agencies are listed separately.</p></div>
-        <div class="seg" id="empTab" role="group" aria-label="Employer filter"></div>
+        <div><h2>Posts per day</h2><p class="sub">New unique postings first seen each day, for the filters above. Weekends dip; hatched bars are partial scans.</p></div>
       </div>
-      <div class="bl" id="employers"></div>
+      <div class="daily" id="daily"></div>
+      <div class="xlab" id="xlab"></div>
+      <div class="legend">
+        <span><i style="background:var(--blue)"></i>Full scan</span>
+        <span><i style="background:repeating-linear-gradient(135deg,var(--blue-soft) 0 3px,transparent 3px 5px);outline:1px solid var(--blue-soft)"></i>Partial scan</span>
+        <span><i style="border:1px dashed var(--ink-3)"></i>No scan that day</span>
+      </div>
     </section>
-    <section class="card">
-      <div class="head"><div><h2>Top remote employers</h2><p class="sub">Companies with the most postings flagged remote.</p></div></div>
-      <div class="bl" id="remote"></div>
-    </section>
-  </div>
 
-  <div class="grid2 row2">
-    <section class="card">
-      <div class="head"><div><h2>Cities</h2><p class="sub">Share of all posts, with the tech and remote share inside each city.</p></div></div>
-      <div class="tscroll"><table id="cities"><thead></thead><tbody></tbody></table></div>
-    </section>
-    <section class="card">
-      <div class="head"><div><h2>"AI" in the job title</h2><p class="sub" id="aiSub"></p></div></div>
-      <div class="bl" id="ai"></div>
-    </section>
-  </div>
+    <section class="card" id="explorer">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabSectors" data-tab="sectors">Sectors<small id="nSectors"></small></button>
+        <button type="button" role="tab" id="tabCompanies" data-tab="companies">Companies<small id="nCompanies"></small></button>
+      </div>
 
-  <div class="grid2 row2">
-    <section class="card">
-      <div class="head"><div><h2>New companies this week</h2><p class="sub">First ever posting in the last 7 days, at least two roles.</p></div></div>
-      <div class="bl" id="newcos"></div>
-    </section>
-    <section class="card">
-      <div class="head"><div><h2>Recruiters and agencies</h2><p class="sub">Accounts posting on behalf of other employers. High volume here does not mean one company is hiring.</p></div></div>
-      <div class="bl" id="recruiters"></div>
-    </section>
-  </div>
+      <div id="paneSectors">
+        <div class="head">
+          <p class="sub" style="max-width:520px;margin:0">Every sector side by side. Pick what matters to you and the table reorders. Click a sector to see which companies hired in it, and when.</p>
+          <div class="seg" id="persona" role="group" aria-label="Sort sectors by"></div>
+        </div>
+        <div class="tscroll"><table id="compass"><thead></thead><tbody></tbody></table></div>
+        <p class="note">Change compares the latest 7 days of the period with the 7 days before, same weekdays only and only where both days had a full scan, so skipped scan days do not read as a drop. Faded values rest on fewer than 40 posts. Entry level means junior, associate, trainee or intern in the title; senior includes lead, manager and head roles.</p>
+        <div class="drill" id="drill"></div>
+      </div>
 
-  <section class="card">
-    <div class="head"><div><h2>Most common job titles</h2><p class="sub">Exact title matches. Real demand for a role is higher, because companies phrase the same job differently.</p></div></div>
-    <div class="bl" id="titles"></div>
-  </section>
+      <div id="paneCompanies">
+        <div class="head">
+          <p class="sub" style="max-width:520px;margin:0">Companies ranked for the filters above. The strip shows the days each one posted. Click a company for its full hiring profile.</p>
+          <div class="seg" id="coSort" role="group" aria-label="Rank companies by"></div>
+        </div>
+        <div class="tscroll"><table id="coTable"><thead></thead><tbody></tbody></table></div>
+        <div class="more" id="coMore"></div>
+        <p class="note" id="coNote"></p>
+      </div>
+    </section>
 
-  <section class="card">
-    <div class="head"><div><h2>How this works</h2></div></div>
-    <div class="method">
-      <div><b>Sources</b>Indeed and LinkedIn: every Pakistan posting from the last 24 hours, all sectors and seniority levels, scanned once a day.</div>
-      <div><b>Deduplication</b>The same opening posted on both sites counts once, keyed on company, title and city. Each post counts on the day it first appeared.</div>
-      <div><b>Classification</b>Sector, seniority and city come from rules on the job title, because the sites leave those fields empty. About 17% of titles are too vague to place.</div>
-      <div><b>Remote</b>Uses the remote flag the job site provides. Some remote roles are not flagged, so treat remote shares as a floor.</div>
-      <div><b>Limits</b>Salary is not published on almost any post, so pay is not covered. Companies that never post on these two sites are invisible here.</div>
-      <div><b>Privacy</b>Only aggregate counts are published. Individual postings and links are never shown or shared.</div>
+    <div class="grid2 row2">
+      <section class="card">
+        <div class="head"><div><h2>Cities</h2><p class="sub">Share of posts, with the tech and remote share inside each city. Click a city to filter the whole page.</p></div></div>
+        <div class="tscroll"><table id="cities"><thead></thead><tbody></tbody></table></div>
+      </section>
+      <section class="card">
+        <div class="head"><div><h2>"AI" in the job title</h2><p class="sub" id="aiSub"></p></div></div>
+        <div class="bl" id="ai"></div>
+      </section>
     </div>
-  </section>
+
+    <section class="card">
+      <div class="head"><div><h2>Most common job titles</h2><p class="sub">Exact title matches shared by several companies. Real demand for a role is higher, because companies phrase the same job differently.</p></div></div>
+      <div class="bl" id="titles"></div>
+    </section>
+
+    <section class="card">
+      <div class="head"><div><h2>How this works</h2></div></div>
+      <div class="method">
+        <div><b>Sources</b>Indeed and LinkedIn: every Pakistan posting from the last 24 hours, all sectors and seniority levels, scanned once a day.</div>
+        <div><b>Deduplication</b>The same opening posted on both sites counts once, keyed on company, title and city. Each post counts on the day it first appeared.</div>
+        <div><b>Classification</b>Sector, seniority and city come from rules on the job title, because the sites leave those fields empty. About 17% of titles are too vague to place.</div>
+        <div><b>Filters</b>Every number, chart and table on this page is recounted from the same data when you change a filter, so the parts always add up.</div>
+        <div><b>Company tags</b>Steady: posted on at least 4 days and a third of scan days. Burst: 5 or more posts with 70% on one day. New: first ever post in the last 7 days of the period.</div>
+        <div><b>Recruiters</b>Agencies post for other employers. They are detected by name and kept out of the company ranking unless you pick them under Posted by.</div>
+        <div><b>Remote</b>Uses the remote flag the job site provides. Some remote roles are not flagged, so treat remote shares as a floor.</div>
+        <div><b>Limits</b>Salary is not published on almost any post, so pay is not covered. Companies that never post on these two sites are invisible here.</div>
+        <div><b>Privacy</b>Only counts are published: no job links and no descriptions. A job title appears only when several companies share it.</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- company profile -->
+  <div class="only-company">
+    <div class="kpis" id="coKpis"></div>
+    <section class="card">
+      <div class="head"><div><h2>Hiring timeline</h2><p class="sub" id="coDailySub"></p></div></div>
+      <div class="daily" id="coDaily"></div>
+      <div class="xlab" id="coXlab"></div>
+      <p class="read" id="coRead"></p>
+    </section>
+    <div class="grid2 row2">
+      <section class="card"><div class="head"><div><h2>What they hire for</h2><p class="sub">Posts by sector.</p></div></div><div class="bl" id="coSectors"></div></section>
+      <section class="card"><div class="head"><div><h2>Seniority</h2><p class="sub">Posts by level in the title.</p></div></div><div class="bl" id="coLevels"></div></section>
+    </div>
+    <div class="grid2 row2">
+      <section class="card"><div class="head"><div><h2>Where</h2><p class="sub" id="coCitySub"></p></div></div><div class="bl" id="coCities"></div></section>
+      <section class="card"><div class="head"><div><h2>Common titles</h2><p class="sub">Only titles that several companies share are named. The rest are counted as other.</p></div></div><div class="bl" id="coTitles"></div></section>
+    </div>
+    <section class="card">
+      <div class="head"><div><h2 id="coPeersH"></h2><p class="sub">Other companies in the same sector for this period. A quick way to widen your shortlist.</p></div></div>
+      <div class="tscroll"><table id="coPeers"><thead></thead><tbody></tbody></table></div>
+    </section>
+  </div>
 
   <footer>
     <span id="updated"></span>
-    <span>Built by Asif Ejaz · <a id="repo" href="https://github.com/asifejjaz/pk-job-pulse">Source code</a></span>
+    <span>Built by Asif Ejaz · <a id="repo" href="https://github.com/asifejjaz/pk-job-pulse">Source code</a> · <button class="theme only-company" data-theme-btn type="button">Theme</button></span>
   </footer>
 </div>
 <div id="tip" role="tooltip"></div>
 
 <script>
+/* engine:start */
+// Pure counting over the published cube. No DOM in here, so it can be tested on its own.
+function makeEngine(S) {
+  const C = S.cube, R = C.rows, N = R.n.length, ND = C.days.length;
+  const scan = C.days.map(d => d[1] !== 'missing'), full = C.days.map(d => d[1] === 'ok');
+  const flags = (len, on) => { const a = new Array(len).fill(false); on.forEach(i => a[i] = true); return a; };
+  const isTech = flags(C.sectors.length, C.tech);
+  const isEntry = flags(C.levels.length, C.entry), isSenior = flags(C.levels.length, C.senior);
+  const salesIx = C.sectors.indexOf('Sales & Business Development');
+  const rec = C.companies.map(c => c[1] === 1);
+  const lname = C.companies.map(c => c[0].toLowerCase());
+  const firstEver = new Array(C.companies.length).fill(-1);
+  for (let i = 0; i < N; i++) { const c = R.c[i]; if (firstEver[c] < 0 || R.d[i] < firstEver[c]) firstEver[c] = R.d[i]; }
+
+  function scanDays(a, b) { let k = 0; for (let d = Math.max(0, a); d <= Math.min(ND - 1, b); d++) if (scan[d]) k++; return k; }
+
+  // f: {from, to, sector, city, level, mode, poster, q}. Returns rows passing every filter
+  // except the date (all) and rows passing the date as well (rows).
+  function select(f) {
+    const q = (f.q || '').trim().toLowerCase();
+    let qok = null;
+    if (q) { qok = lname.map(n => n.includes(q)); qok[0] = false; }
+    const all = [], rows = [];
+    for (let i = 0; i < N; i++) {
+      const c = R.c[i], l = R.l[i];
+      if (f.sector >= 0 && R.s[i] !== f.sector) continue;
+      if (f.city >= 0 && R.y[i] !== f.city) continue;
+      if (f.level === 'entry' && !isEntry[l]) continue;
+      if (f.level === 'senior' && !isSenior[l]) continue;
+      if (f.level === 'mid' && (isEntry[l] || isSenior[l])) continue;
+      if (f.mode === 'remote' && !(R.f[i] & 1)) continue;
+      if (f.mode === 'onsite' && (R.f[i] & 1)) continue;
+      if (f.poster === 'direct' && (c === 0 || rec[c])) continue;
+      if (f.poster === 'recruiter' && !rec[c]) continue;
+      if (f.company >= 0 && c !== f.company) continue;
+      if (qok && !qok[c]) continue;
+      all.push(i);
+      if (R.d[i] >= f.from && R.d[i] <= f.to) rows.push(i);
+    }
+    return { all, rows };
+  }
+
+  // Latest 7 days ending at `to` against the 7 before, same weekdays only: a day is set
+  // against the day one week earlier, and only when both had a full scan. Skipped and
+  // partial days drop out instead of reading as a fall. Needs 3 matching weekdays.
+  function rate(byDay, to) {
+    if (to - 13 < 0) return null;
+    let cur = 0, prev = 0, pairs = 0;
+    for (let d = to - 6; d <= to; d++) if (full[d] && full[d - 7]) { pairs++; cur += byDay[d] || 0; prev += byDay[d - 7] || 0; }
+    if (pairs < 3 || !cur || !prev) return null;
+    return { pct: 100 * (cur - prev) / prev, base: cur + prev, pairs };
+  }
+  function change(all, to) {
+    const byDay = {};
+    for (const i of all) { const d = R.d[i]; if (d > to - 14 && d <= to) byDay[d] = (byDay[d] || 0) + R.n[i]; }
+    return rate(byDay, to);
+  }
+
+  function summary(sel, f) {
+    let posts = 0, remote = 0, entry = 0, tech = 0, ai = 0; const cos = new Set();
+    for (const i of sel.rows) {
+      const n = R.n[i]; posts += n;
+      if (R.f[i] & 1) remote += n; if (R.f[i] & 2) ai += n;
+      if (isEntry[R.l[i]]) entry += n; if (isTech[R.s[i]]) tech += n;
+      if (R.c[i]) cos.add(R.c[i]);
+    }
+    const sd = scanDays(f.from, f.to);
+    return { posts, companies: cos.size, scanDays: sd, perDay: sd ? posts / sd : 0, remote, entry, tech, ai, change: change(sel.all, f.to) };
+  }
+
+  function daily(rows, f) {
+    const out = [];
+    for (let d = f.from; d <= f.to; d++) out.push({ d, day: C.days[d][0], status: C.days[d][1], posts: 0, remote: 0, tech: 0, sales: 0, cos: new Set() });
+    for (const i of rows) {
+      const o = out[R.d[i] - f.from], n = R.n[i];
+      o.posts += n; if (R.f[i] & 1) o.remote += n; if (isTech[R.s[i]]) o.tech += n; if (R.s[i] === salesIx) o.sales += n;
+      if (R.c[i]) o.cos.add(R.c[i]);
+    }
+    out.forEach(o => { o.companies = o.cos.size; delete o.cos; });
+    return out;
+  }
+
+  function sectors(sel, f) {
+    const acc = C.sectors.map((name, s) => ({ s, sector: name, posts: 0, entry: 0, senior: 0, remote: 0, ai: 0, byDay: {}, cos: new Set() }));
+    let total = 0;
+    for (const i of sel.rows) {
+      const a = acc[R.s[i]], n = R.n[i]; total += n; a.posts += n;
+      if (isEntry[R.l[i]]) a.entry += n; if (isSenior[R.l[i]]) a.senior += n;
+      if (R.f[i] & 1) a.remote += n; if (R.f[i] & 2) a.ai += n;
+      if (R.c[i]) a.cos.add(R.c[i]);
+    }
+    for (const i of sel.all) { const d = R.d[i], a = acc[R.s[i]]; if (d > f.to - 14 && d <= f.to) a.byDay[d] = (a.byDay[d] || 0) + R.n[i]; }
+    const sd = scanDays(f.from, f.to);
+    return acc.filter(a => a.posts).map(a => ({
+      s: a.s, sector: a.sector, posts: a.posts, companies: a.cos.size, share: 100 * a.posts / total, per_day: sd ? a.posts / sd : 0,
+      entry: 100 * a.entry / a.posts, senior: 100 * a.senior / a.posts, remote: 100 * a.remote / a.posts, ai: 100 * a.ai / a.posts,
+      change: rate(a.byDay, f.to),
+    })).sort((a, b) => b.posts - a.posts);
+  }
+
+  const topOf = (counts, labels, n) => Object.keys(counts).map(k => [labels[k], counts[k], +k]).sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]))).slice(0, n);
+  function breakdown(rows) {
+    const t = {}, y = {}, l = {}, s = {}; let other = 0;
+    for (const i of rows) {
+      const n = R.n[i];
+      if (R.t[i]) t[R.t[i]] = (t[R.t[i]] || 0) + n; else other += n;
+      y[R.y[i]] = (y[R.y[i]] || 0) + n; l[R.l[i]] = (l[R.l[i]] || 0) + n; s[R.s[i]] = (s[R.s[i]] || 0) + n;
+    }
+    return { titles: topOf(t, C.titles, 15), otherTitles: other, cities: topOf(y, C.cities, 8), levels: topOf(l, C.levels, 8), sectors: topOf(s, C.sectors, 18) };
+  }
+
+  // One entry per named company in `rows`, with the days it posted.
+  function companies(rows, f) {
+    const m = new Map();
+    for (const i of rows) {
+      const c = R.c[i]; if (!c) continue;
+      let o = m.get(c);
+      if (!o) { o = { c, name: C.companies[c][0], rec: rec[c], posts: 0, remote: 0, entry: 0, tech: 0, byDay: {}, sec: {}, city: {} }; m.set(c, o); }
+      const n = R.n[i], d = R.d[i];
+      o.posts += n; if (R.f[i] & 1) o.remote += n; if (isEntry[R.l[i]]) o.entry += n; if (isTech[R.s[i]]) o.tech += n;
+      o.byDay[d] = (o.byDay[d] || 0) + n; o.sec[R.s[i]] = (o.sec[R.s[i]] || 0) + n; o.city[R.y[i]] = (o.city[R.y[i]] || 0) + n;
+    }
+    const sd = scanDays(f.from, f.to), newFrom = Math.max(f.to - 6, 14);
+    const out = [];
+    for (const o of m.values()) {
+      const ds = Object.keys(o.byDay).map(Number);
+      o.days = ds.length; o.first = Math.min(...ds); o.last = Math.max(...ds);
+      o.maxDay = ds.reduce((a, d) => o.byDay[d] > o.byDay[a] ? d : a, ds[0]);
+      const secs = topOf(o.sec, C.sectors, 18), top = secs.find(x => !x[0].startsWith('Other')) || secs[0]; o.sector = top[0]; o.sectorIx = top[2];
+      o.cities = topOf(o.city, C.cities, 2).map(x => x[0]);
+      o.firstEver = firstEver[o.c];
+      o.tag = (o.firstEver >= newFrom && o.firstEver <= f.to) ? 'new'
+        : (o.posts >= 5 && o.byDay[o.maxDay] / o.posts >= 0.7) ? 'burst'
+        : (o.days >= 4 && o.days * 3 >= sd) ? 'steady' : '';
+      out.push(o);
+    }
+    return out.sort((a, b) => b.posts - a.posts || a.name.localeCompare(b.name));
+  }
+
+  function cities(rows) {
+    const acc = {}; let total = 0;
+    for (const i of rows) { const a = acc[R.y[i]] || (acc[R.y[i]] = { y: R.y[i], city: C.cities[R.y[i]], posts: 0, tech: 0, remote: 0 }); const n = R.n[i]; total += n; a.posts += n; if (isTech[R.s[i]]) a.tech += n; if (R.f[i] & 1) a.remote += n; }
+    return Object.values(acc).sort((a, b) => b.posts - a.posts).map(a => ({ ...a, share: 100 * a.posts / total, techShare: 100 * a.tech / a.posts, remoteShare: 100 * a.remote / a.posts }));
+  }
+  function aiBySector(rows) {
+    const s = {}; let posts = 0;
+    for (const i of rows) if (R.f[i] & 2) { s[R.s[i]] = (s[R.s[i]] || 0) + R.n[i]; posts += R.n[i]; }
+    return { posts, sectors: topOf(s, C.sectors, 8) };
+  }
+
+  // Everything about one company inside the period. Other filters are ignored on purpose.
+  function profile(c, f) {
+    const base = { from: f.from, to: f.to, sector: -1, city: -1, level: '', mode: 'all', poster: 'all', q: '', company: -1 };
+    const sel = select({ ...base, company: c });
+    const me = companies(sel.rows, f)[0] || null;
+    const peersPool = companies(select({ ...base, poster: rec[c] ? 'recruiter' : 'direct' }).rows, f);
+    const rank = me ? peersPool.findIndex(o => o.c === c) + 1 : 0;
+    let peers = [];
+    if (me) peers = companies(select({ ...base, poster: 'direct', sector: me.sectorIx }).rows, f).filter(o => o.c !== c).slice(0, 8);
+    let ever = 0; for (let i = 0; i < N; i++) if (R.c[i] === c) ever += R.n[i];
+    return { c, name: C.companies[c][0], rec: rec[c], me, rank, pool: peersPool.length, peers, ever, firstEver: firstEver[c],
+      daily: daily(sel.rows, f), scanDays: scanDays(f.from, f.to), ...breakdown(sel.rows) };
+  }
+
+  return { C, R, ND, scan, rec, isEntry, isSenior, isTech, firstEver, scanDays, select, summary, daily, sectors, breakdown, companies, cities, aiBySector, profile, change };
+}
+/* engine:end */
+
 const $ = s => document.querySelector(s);
-const fmt = n => n.toLocaleString('en-US');
+const fmt = n => Math.round(n).toLocaleString('en-US');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const tip = $('#tip');
 function showTip(e, html) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(e); }
@@ -253,162 +524,345 @@ function bindTips(root) {
     el.addEventListener('mouseleave', hideTip);
   });
 }
-function chg(v) {
-  if (v === null || v === undefined) return '<span class="chg flat">n/a</span>';
-  const cls = Math.abs(v) < 3 ? 'flat' : v > 0 ? 'up' : 'down';
+function chg(ch) {
+  if (!ch) return '<span class="chg flat" title="Not enough history to compare">n/a</span>';
+  const v = ch.pct, cls = Math.abs(v) < 3 ? 'flat' : v > 0 ? 'up' : 'down';
   const arrow = cls === 'flat' ? '' : v > 0 ? '▲ ' : '▼ ';
-  return `<span class="chg ${cls}">${arrow}${v > 0 ? '+' : ''}${v.toFixed(0)}%</span>`;
+  const thin = ch.base < 40;
+  return `<span class="chg ${cls}${thin ? ' thin' : ''}"${thin ? ` title="Small sample: ${ch.base} posts in two weeks"` : ''}>${arrow}${Math.abs(v).toFixed(0)}%</span>`;
 }
 const ACR = { hr: 'HR', ai: 'AI', it: 'IT', qa: 'QA', sqa: 'SQA', seo: 'SEO', ui: 'UI', ux: 'UX', csr: 'CSR', bd: 'BD', ceo: 'CEO', cfo: 'CFO', erp: 'ERP', ml: 'ML', bpo: 'BPO' };
 const titleCase = t => t.replace(/[a-z]+/gi, w => ACR[w.toLowerCase()] || (w[0].toUpperCase() + w.slice(1)));
+const asDate = d => new Date(d + 'T00:00:00');
 function monthLabel(m) { const [y, mo] = m.split('-'); return new Date(+y, +mo - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' }); }
-function dayLabel(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+function dayLabel(d) { return asDate(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+function shortDay(d) { return asDate(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+const plural = (n, w) => `${fmt(n)} ${w}${n === 1 ? '' : 's'}`;
+const nCos = n => `${fmt(n)} ${n === 1 ? 'company' : 'companies'}`;
 
-let S, W = '30d', persona = 'posts', sortKey = 'posts', selSector = null, empMode = 'all';
+let S, E;
+const st = { preset: '30d', from: 0, to: 0, sector: -1, city: -1, level: '', mode: 'all', poster: 'all', q: '',
+  tab: 'sectors', persona: 'posts', sortKey: 'posts', selSector: -1, drillLimit: 10,
+  coSort: 'posts', coKey: 'posts', coLimit: 25, company: -1 };
 const STORE = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
                 set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const D = ix => E.C.days[ix][0];
+const filt = () => ({ from: st.from, to: st.to, sector: st.sector, city: st.city, level: st.level, mode: st.mode, poster: st.poster, q: st.q, company: -1 });
+const rangeText = () => `${shortDay(D(st.from))} to ${shortDay(D(st.to))}, ${D(st.to).slice(0, 4)}`;
+const coHref = name => '#/company/' + encodeURIComponent(name);
 
-function barList(el, items, { value, label, sub, cls = '', tipf }) {
+function barList(el, items, { value, label, sub, cls = '', tipf, href }) {
   const max = Math.max(1, ...items.map(value));
   el.innerHTML = items.length ? items.map(it => `
     <div class="r" data-tip="${esc(tipf ? tipf(it) : `<b>${esc(label(it))}</b><br>${fmt(value(it))}`)}">
-      <span class="n">${esc(label(it))}${sub ? `<small>${esc(sub(it))}</small>` : ''}</span>
+      <span class="n">${href ? `<a href="${esc(href(it))}">${esc(label(it))}</a>` : esc(label(it))}${sub ? `<small>${esc(sub(it))}</small>` : ''}</span>
       <span class="t"><i class="${typeof cls === 'function' ? cls(it) : cls}" style="width:${(100 * value(it) / max).toFixed(1)}%"></i></span>
       <span class="v">${fmt(value(it))}</span>
-    </div>`).join('') : '<p class="muted">Nothing yet for this window.</p>';
+    </div>`).join('') : '<p class="muted">Nothing here for these filters.</p>';
   bindTips(el);
 }
 
-function renderWindowButtons() {
-  const opts = [['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ...S.months.map(m => [m, monthLabel(m)]), ['all', 'All time']];
-  $('#win').innerHTML = opts.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${k === W}">${l}</button>`).join('');
-  $('#win').querySelectorAll('button').forEach(b => b.onclick = () => { W = b.dataset.k; STORE.set('pulse.win', W); render(); });
+/* ---------- period and filters ---------- */
+function presetRange(k) {
+  const last = E.ND - 1;
+  if (k === '7d') return [Math.max(0, last - 6), last];
+  if (k === '30d') return [Math.max(0, last - 29), last];
+  if (k === 'all') return [0, last];
+  const ix = E.C.days.map((d, i) => d[0].startsWith(k) ? i : -1).filter(i => i >= 0);
+  return ix.length ? [ix[0], ix[ix.length - 1]] : [0, last];
+}
+function setPreset(k) { st.preset = k; [st.from, st.to] = presetRange(k); STORE.set('pulse.win', k); }
+function renderFilters() {
+  const opts = [['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ...S.months.slice(-3).map(m => [m, monthLabel(m)]), ['all', 'All time']];
+  $('#win').innerHTML = opts.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${k === st.preset}">${l}</button>`).join('');
+  $('#win').querySelectorAll('button').forEach(b => b.onclick = () => { setPreset(b.dataset.k); render(); });
+  const a = $('#dFrom'), b = $('#dTo');
+  a.min = b.min = S.first_day; a.max = b.max = S.last_day; a.value = D(st.from); b.value = D(st.to);
+}
+function initFilterControls() {
+  const C = E.C, all = E.select({ from: 0, to: E.ND - 1, sector: -1, city: -1, level: '', mode: 'all', poster: 'all', q: '', company: -1 }).rows;
+  const cityCount = {}; all.forEach(i => cityCount[E.R.y[i]] = (cityCount[E.R.y[i]] || 0) + E.R.n[i]);
+  $('#fSector').innerHTML = '<option value="-1">All sectors</option>' + C.sectors.map((s, i) => `<option value="${i}">${esc(s)}</option>`).join('');
+  $('#fCity').innerHTML = '<option value="-1">All cities</option>' + C.cities.map((c, i) => [c, i]).filter(([c, i]) => cityCount[i] >= 10).map(([c, i]) => `<option value="${i}">${esc(c)}</option>`).join('');
+  $('#coList').innerHTML = C.companies.slice(1, 400).map(c => `<option value="${esc(c[0])}">`).join('');
+  const on = (id, key, num) => $(id).addEventListener('change', e => { st[key] = num ? +e.target.value : e.target.value; resetPaging(); render(); });
+  on('#fSector', 'sector', true); on('#fCity', 'city', true); on('#fLevel', 'level'); on('#fMode', 'mode'); on('#fPoster', 'poster');
+  let t; $('#fQ').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { st.q = e.target.value; resetPaging(); render(); }, 180); });
+  const dayIx = v => E.C.days.findIndex(d => d[0] === v);
+  const onDate = () => {
+    let a = dayIx($('#dFrom').value), b = dayIx($('#dTo').value);
+    if (a < 0 || b < 0) return;
+    if (a > b) [a, b] = [b, a];
+    st.from = a; st.to = b; st.preset = 'custom'; resetPaging(); render();
+  };
+  $('#dFrom').addEventListener('change', onDate); $('#dTo').addEventListener('change', onDate);
+  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { location.hash = b.dataset.tab === 'companies' ? '#/companies' : '#/'; });
+}
+function resetPaging() { st.coLimit = 25; st.drillLimit = 10; }
+function syncControls() {
+  $('#fSector').value = st.sector; $('#fCity').value = st.city; $('#fLevel').value = st.level; $('#fMode').value = st.mode; $('#fPoster').value = st.poster;
+  if ($('#fQ').value !== st.q) $('#fQ').value = st.q;
+}
+function activeFilters() {
+  const C = E.C, a = [];
+  if (st.sector >= 0) a.push(C.sectors[st.sector]);
+  if (st.city >= 0) a.push(C.cities[st.city]);
+  if (st.level) a.push({ entry: 'Entry level', mid: 'Mid level or not stated', senior: 'Senior, manager, head' }[st.level]);
+  if (st.mode !== 'all') a.push(st.mode === 'remote' ? 'Remote only' : 'On site only');
+  if (st.poster !== 'all') a.push(st.poster === 'direct' ? 'Direct employers' : 'Recruiters and agencies');
+  if (st.q.trim()) a.push(`Company name contains "${st.q.trim()}"`);
+  return a;
+}
+function renderShowing(sum) {
+  const a = activeFilters();
+  if (st.company >= 0) {
+    $('#showing').innerHTML = `<span>Period: <b>${rangeText()}</b>. A company profile uses the period only and ignores the other filters.</span>`;
+    return;
+  }
+  $('#showing').innerHTML = `<span>Showing <b>${plural(sum.posts, 'post')}</b> from <b>${nCos(sum.companies)}</b> · ${rangeText()}${a.length ? ' · ' + a.map(esc).join(' · ') : ''}</span>` +
+    (a.length ? '<button type="button" class="btn" id="reset">Clear filters</button>' : '');
+  const r = $('#reset'); if (r) r.onclick = () => { Object.assign(st, { sector: -1, city: -1, level: '', mode: 'all', poster: 'all', q: '' }); resetPaging(); render(); };
 }
 
-function renderKPIs(w) {
+/* ---------- shared pieces ---------- */
+function renderBars(el, xl, days, tipf) {
+  const max = Math.max(1, ...days.map(d => d.posts));
+  const step = max > 800 ? 250 : max > 400 ? 200 : max > 150 ? 100 : max > 60 ? 25 : max > 20 ? 10 : max > 8 ? 5 : max > 3 ? 2 : 1;
+  let grid = '';
+  for (let g = step; g <= max; g += step) grid += `<div class="gridline" style="bottom:${100 * g / max}%"><span>${g}</span></div>`;
+  el.innerHTML = grid + days.map(d => {
+    const t = d.status === 'missing' ? `<b>${dayLabel(d.day)}</b><br>No scan that day` : tipf(d);
+    return `<div class="col ${d.status}" data-tip="${esc(t)}"><div class="b" style="height:${(100 * d.posts / max).toFixed(1)}%"></div></div>`;
+  }).join('');
+  const every = days.length > 45 ? 7 : days.length > 20 ? 3 : 1;
+  xl.innerHTML = days.map((d, i) => `<span>${i % every === 0 ? d.day.slice(8) : ''}</span>`).join('');
+  bindTips(el);
+}
+const statusText = s => s === 'partial' ? 'Partial scan' : 'Full scan';
+
+function strip(o) {
+  const span = st.to - st.from + 1, cells = [];
+  if (span <= 62) for (let d = st.from; d <= st.to; d++) cells.push({ n: o.byDay[d] || 0, miss: !E.scan[d], label: shortDay(D(d)) });
+  else for (let a = st.from; a <= st.to; a += 7) {
+    const b = Math.min(a + 6, st.to); let n = 0, any = false;
+    for (let d = a; d <= b; d++) { n += o.byDay[d] || 0; any = any || E.scan[d]; }
+    cells.push({ n, miss: !any, label: `${shortDay(D(a))} to ${shortDay(D(b))}` });
+  }
+  const mx = Math.max(1, ...cells.map(c => c.n));
+  return '<span class="strip">' + cells.map(c => `<i class="${c.n ? 'a' : c.miss ? 'm' : ''}"${c.n ? ` style="opacity:${(0.35 + 0.65 * c.n / mx).toFixed(2)}"` : ''} title="${c.label}: ${c.n ? plural(c.n, 'post') : c.miss ? 'no scan' : 'no posts'}"></i>`).join('') + '</span>';
+}
+const TAGS = { new: ['New', 'First ever post is in the last 7 days of this period'], steady: ['Steady', 'Posted on at least 4 days and a third of scan days'], burst: ['Burst', '70% or more of its posts landed on one day'] };
+const tagHtml = o => (o.rec ? '<span class="tag" title="Posts on behalf of other employers">Recruiter</span>' : '') + (o.tag ? `<span class="tag ${o.tag}" title="${TAGS[o.tag][1]}">${TAGS[o.tag][0]}</span>` : '');
+
+const CO_COLS = [['rank', '#'], ['name', 'Company'], ['posts', 'Posts'], ['days', 'Days active'], ['first', 'First post'], ['last', 'Latest post'], ['strip', 'When they posted'], ['remote', 'Remote posts'], ['entry', 'Entry level posts']];
+function companyTable(table, list, { offset = 0, showSector = true, sortKey = null, onSort = null }) {
+  table.querySelector('thead').innerHTML = '<tr>' + CO_COLS.map(([k, l]) => {
+    const can = onSort && k !== 'rank' && k !== 'strip';
+    return `<th data-k="${k}" class="${k === 'name' ? 'l ' : ''}${can ? 'sortable ' : ''}${k === sortKey ? 'sorted' : ''}">${l}${k === sortKey ? ' ↓' : ''}</th>`;
+  }).join('') + '</tr>';
+  if (onSort) table.querySelectorAll('th.sortable').forEach(th => th.onclick = () => onSort(th.dataset.k));
+  table.querySelector('tbody').innerHTML = list.length ? list.map((o, i) => `
+    <tr class="click" data-href="${esc(coHref(o.name))}">
+      <td class="rank">${offset + i + 1}</td>
+      <td class="co l"><a href="${esc(coHref(o.name))}">${esc(o.name)}</a>${tagHtml(o)}${showSector ? `<small>${esc(o.sector)}</small>` : ''}</td>
+      <td>${fmt(o.posts)}</td><td>${o.days}</td><td>${shortDay(D(o.first))}</td><td>${shortDay(D(o.last))}</td>
+      <td>${strip(o)}</td><td>${o.remote ? fmt(o.remote) : '<span class="muted">0</span>'}</td><td>${o.entry ? fmt(o.entry) : '<span class="muted">0</span>'}</td>
+    </tr>`).join('') : `<tr><td colspan="${CO_COLS.length}" class="l muted">No company matches these filters.</td></tr>`;
+  table.querySelectorAll('tbody tr.click').forEach(tr => tr.onclick = e => { if (!e.target.closest('a')) location.hash = tr.dataset.href; });
+}
+// Rankings leave out recruiters and unnamed posts unless the reader asks for recruiters.
+const rankable = list => st.poster === 'recruiter' ? list : list.filter(o => !o.rec);
+
+/* ---------- main view ---------- */
+function renderKPIs(sum) {
+  const p = n => sum.posts ? (100 * n / sum.posts).toFixed(1) + '%' : 'n/a';
   const k = [
-    ['Posts tracked', fmt(w.posts), `${w.scan_days} scan days`],
-    ['Companies', fmt(w.companies), 'posting at least once'],
-    ['Posts per scan day', fmt(Math.round(w.per_day)), 'average'],
-    ['Week over week', chg(w.change), 'per scan day'],
-    ['Remote flagged', w.remote.toFixed(1) + '%', 'of posts'],
-    ['Entry level', w.entry.toFixed(1) + '%', 'junior, associate, intern'],
+    ['Posts tracked', fmt(sum.posts), `${sum.scanDays} scan days`],
+    ['Companies hiring', fmt(sum.companies), 'posting at least once'],
+    ['Posts per scan day', sum.perDay < 10 ? sum.perDay.toFixed(1) : fmt(sum.perDay), 'average'],
+    ['Latest week', chg(sum.change), 'against the week before, same weekdays'],
+    ['Remote flagged', p(sum.remote), `${fmt(sum.remote)} posts`],
+    ['Entry level', p(sum.entry), 'junior, associate, intern'],
   ];
   $('#kpis').innerHTML = k.map(([l, v, h]) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="h">${h}</div></div>`).join('');
 }
 
-function renderDaily() {
-  let days = S.daily;
-  if (W === '7d') days = days.slice(-7);
-  else if (W === '30d') days = days.slice(-30);
-  else if (W.length === 7) days = days.filter(d => d.day.startsWith(W));
-  const max = Math.max(1, ...days.map(d => d.posts));
-  const step = max > 800 ? 250 : max > 400 ? 200 : 100;
-  let grid = '';
-  for (let g = step; g <= max; g += step) grid += `<div class="gridline" style="bottom:${100 * g / max}%"><span>${g}</span></div>`;
-  $('#daily').innerHTML = grid + days.map(d => {
-    const status = d.status === 'missing' ? 'No scan that day' : d.status === 'partial' ? 'Partial scan' : 'Full scan';
-    const t = d.status === 'missing' ? `<b>${dayLabel(d.day)}</b><br>No scan that day`
-      : `<b>${dayLabel(d.day)}</b><br>${fmt(d.posts)} posts from ${fmt(d.companies)} companies<br>Tech ${fmt(d.tech)} · Sales ${fmt(d.sales)} · Remote ${fmt(d.remote)}<br><span style="opacity:.7">${status}</span>`;
-    return `<div class="col ${d.status}" data-tip="${esc(t)}"><div class="b" style="height:${(100 * d.posts / max).toFixed(1)}%"></div></div>`;
-  }).join('');
-  const every = days.length > 20 ? 3 : 1;
-  $('#xlab').innerHTML = days.map((d, i) => `<span>${i % every === 0 ? d.day.slice(8) : ''}</span>`).join('');
-  bindTips($('#daily'));
-}
-
-const PERSONAS = [
-  ['posts', 'Biggest demand', 'posts'],
-  ['entry', 'Starting out', 'entry'],
-  ['senior', 'Experienced', 'senior'],
-  ['remote', 'Want remote', 'remote'],
-  ['change', 'Growing fastest', 'change'],
-];
-const COLS = [
-  ['sector', 'Sector'], ['posts', 'Posts'], ['per_day', 'Per scan day'], ['change', 'Change'],
-  ['entry', 'Entry level'], ['senior', 'Senior'], ['remote', 'Remote'], ['ai', 'AI in title'],
-];
-function renderCompass(w) {
-  $('#persona').innerHTML = PERSONAS.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${k === persona}">${l}</button>`).join('');
-  $('#persona').querySelectorAll('button').forEach(b => b.onclick = () => { persona = b.dataset.k; sortKey = PERSONAS.find(p => p[0] === persona)[2]; renderCompass(w); });
-  const rows = w.sectors.slice().sort((a, b) => {
+const PERSONAS = [['posts', 'Biggest demand'], ['entry', 'Starting out'], ['senior', 'Experienced'], ['remote', 'Want remote'], ['change', 'Growing fastest']];
+const COLS = [['sector', 'Sector'], ['posts', 'Posts'], ['companies', 'Companies'], ['per_day', 'Per scan day'], ['change', 'Change'], ['entry', 'Entry level'], ['senior', 'Senior'], ['remote', 'Remote'], ['ai', 'AI in title']];
+function renderSectors(sel, f, cos) {
+  const secs = E.sectors(sel, f);
+  $('#nSectors').textContent = secs.length;
+  $('#persona').innerHTML = PERSONAS.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${k === st.persona}">${l}</button>`).join('');
+  $('#persona').querySelectorAll('button').forEach(b => b.onclick = () => { st.persona = st.sortKey = b.dataset.k; render(); });
+  const val = (s, k) => k === 'change' ? (s.change ? s.change.pct : -1e9) : s[k];
+  const rows = secs.slice().sort((a, b) => {
     if (a.sector.startsWith('Other')) return 1; if (b.sector.startsWith('Other')) return -1;
-    if (sortKey === 'sector') return a.sector.localeCompare(b.sector);
-    return (b[sortKey] ?? -1e9) - (a[sortKey] ?? -1e9);
+    if (st.sortKey === 'sector') return a.sector.localeCompare(b.sector);
+    return val(b, st.sortKey) - val(a, st.sortKey);
   });
-  const maxOf = k => Math.max(1, ...w.sectors.filter(s => !s.sector.startsWith('Other')).map(s => s[k]));
+  const maxOf = k => Math.max(1, ...secs.filter(s => !s.sector.startsWith('Other')).map(s => s[k]));
   const mx = { entry: maxOf('entry'), senior: maxOf('senior'), remote: maxOf('remote'), ai: maxOf('ai') };
-  $('#compass thead').innerHTML = '<tr>' + COLS.map(([k, l]) => `<th data-k="${k}" class="${k === sortKey ? 'sorted' : ''}">${l}${k === sortKey ? ' ↓' : ''}</th>`).join('') + '</tr>';
-  $('#compass thead').querySelectorAll('th').forEach(th => th.onclick = () => { sortKey = th.dataset.k; persona = ''; renderCompass(w); });
-  const pctCell = (v, m) => `<span class="cell">${v.toFixed(0)}%<span class="mini"><i style="width:${(100 * v / m).toFixed(0)}%"></i></span></span>`;
-  if (!selSector || !w.sectors.find(s => s.sector === selSector)) selSector = rows[0].sector;
+  $('#compass thead').innerHTML = '<tr>' + COLS.map(([k, l]) => `<th data-k="${k}" class="sortable ${k === st.sortKey ? 'sorted' : ''}">${l}${k === st.sortKey ? ' ↓' : ''}</th>`).join('') + '</tr>';
+  $('#compass thead').querySelectorAll('th').forEach(th => th.onclick = () => { st.sortKey = th.dataset.k; st.persona = ''; render(); });
+  const pctCell = (v, m) => `<span class="cell">${v.toFixed(0)}%<span class="mini"><i style="width:${Math.min(100, 100 * v / m).toFixed(0)}%"></i></span></span>`;
+  if (!rows.length) { $('#compass tbody').innerHTML = `<tr><td colspan="${COLS.length}" class="l muted">No posts match these filters.</td></tr>`; $('#drill').innerHTML = ''; return; }
+  if (!secs.find(s => s.s === st.selSector)) st.selSector = rows[0].s;
   $('#compass tbody').innerHTML = rows.map(s => `
-    <tr data-s="${esc(s.sector)}" class="${s.sector === selSector ? 'sel' : ''}">
+    <tr data-s="${s.s}" class="click ${s.s === st.selSector ? 'sel' : ''}">
       <td>${esc(s.sector)}${s.sector.startsWith('Other') ? ' <span class="muted">(vague titles)</span>' : ''}</td>
-      <td>${fmt(s.posts)}</td><td>${s.per_day.toFixed(0)}</td><td>${chg(s.change)}</td>
+      <td>${fmt(s.posts)}</td><td>${fmt(s.companies)}</td><td>${s.per_day.toFixed(s.per_day < 10 ? 1 : 0)}</td><td>${chg(s.change)}</td>
       <td>${pctCell(s.entry, mx.entry)}</td><td>${pctCell(s.senior, mx.senior)}</td>
       <td>${pctCell(s.remote, mx.remote)}</td><td>${pctCell(s.ai, mx.ai)}</td>
     </tr>`).join('');
-  $('#compass tbody').querySelectorAll('tr').forEach(tr => tr.onclick = () => { selSector = tr.dataset.s; renderCompass(w); });
-  renderDetail(w.sectors.find(s => s.sector === selSector));
+  $('#compass tbody').querySelectorAll('tr').forEach(tr => tr.onclick = () => { st.selSector = +tr.dataset.s; st.drillLimit = 10; render(); $('#drill').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+  renderDrill(sel, f, secs.find(s => s.s === st.selSector));
 }
-function renderDetail(s) {
-  const list = (title, items, f = x => x) => `<div><h3>${title}</h3><ol>${items.map(([n, v]) => `<li><span title="${esc(n)}">${esc(f(n))}</span><b>${fmt(v)}</b></li>`).join('')}</ol></div>`;
-  $('#detail').innerHTML =
-    list(`Top titles in ${esc(s.sector)}`, s.titles, titleCase) +
-    list('Top employers', s.companies.length ? s.companies : [['No clear leader', 0]]) +
-    list('Cities', s.cities) +
-    list('Seniority', s.seniority);
+function renderDrill(sel, f, s) {
+  const rows = sel.rows.filter(i => E.R.s[i] === s.s);
+  const list = rankable(E.companies(rows, f)), b = E.breakdown(rows);
+  const lst = (title, items, fn = x => x) => `<div><h3>${title}</h3><ol>${items.length ? items.map(([n, v]) => `<li><span title="${esc(n)}">${esc(fn(n))}</span><b>${fmt(v)}</b></li>`).join('') : '<li><span class="muted">None in this selection</span></li>'}</ol></div>`;
+  $('#drill').innerHTML = `
+    <div class="head" style="margin-bottom:12px">
+      <div><h3 class="t">Who is hiring in ${esc(s.sector)}, and when</h3>
+      <p class="sub">${nCos(list.length)} posted in this sector, ${rangeText()}. Each strip is one company's posting days.</p></div>
+      <button type="button" class="btn" id="drillAll">Rank all of them in the Companies tab</button>
+    </div>
+    <div class="tscroll"><table id="drillTable"><thead></thead><tbody></tbody></table></div>
+    <div class="more" id="drillMore"></div>
+    <div class="detail">
+      ${lst('Common titles', b.titles.slice(0, 6), titleCase)}
+      ${lst('Cities', b.cities.slice(0, 6))}
+      ${lst('Seniority', b.levels)}
+    </div>`;
+  companyTable($('#drillTable'), list.slice(0, st.drillLimit), { showSector: false });
+  $('#drillMore').innerHTML = list.length > st.drillLimit ? `<button type="button" class="btn" id="drillMoreBtn">Show 15 more</button><span>Showing ${st.drillLimit} of ${fmt(list.length)}</span>` : '';
+  const mb = $('#drillMoreBtn'); if (mb) mb.onclick = () => { st.drillLimit += 15; render(); };
+  $('#drillAll').onclick = () => { st.sector = s.s; st.tab = 'companies'; resetPaging(); location.hash = '#/companies'; render(); $('#explorer').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 }
 
-function renderEmployers(w) {
-  $('#empTab').innerHTML = [['all', 'All sectors'], ['tech', 'Tech only']].map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${k === empMode}">${l}</button>`).join('');
-  $('#empTab').querySelectorAll('button').forEach(b => b.onclick = () => { empMode = b.dataset.k; renderEmployers(w); });
-  const list = (empMode === 'tech' ? w.tech_employers : w.employers).slice(0, 15);
-  barList($('#employers'), list, {
-    value: e => empMode === 'tech' ? e.tech : e.posts, label: e => e.name, sub: e => e.sector,
-    tipf: e => `<b>${esc(e.name)}</b><br>${fmt(e.posts)} posts (${fmt(e.tech)} tech, ${fmt(e.remote)} remote)<br>Posted on ${e.days} scan days<br>${esc(e.cities.join(', '))}`,
-  });
+const CO_SORTS = [['posts', 'Most posts', 'posts'], ['days', 'Most consistent', 'days'], ['new', 'New this week', 'posts'], ['remote', 'Most remote', 'remote'], ['entry', 'Open to juniors', 'entry']];
+function renderCompanies(sel, f, cos) {
+  const ranked = rankable(cos);
+  $('#nCompanies').textContent = fmt(ranked.length);
+  $('#coSort').innerHTML = CO_SORTS.map(([k, l]) => `<button type="button" data-k="${k}" aria-pressed="${k === st.coSort}">${l}</button>`).join('');
+  $('#coSort').querySelectorAll('button').forEach(b => b.onclick = () => { st.coSort = b.dataset.k; st.coKey = CO_SORTS.find(x => x[0] === st.coSort)[2]; st.coLimit = 25; render(); });
+  let list = ranked;
+  if (st.coSort === 'new') list = list.filter(o => o.tag === 'new');
+  if (st.coSort === 'remote') list = list.filter(o => o.remote);
+  if (st.coSort === 'entry') list = list.filter(o => o.entry);
+  const k = st.coKey;
+  list = list.slice().sort((a, b) => k === 'name' ? a.name.localeCompare(b.name) : (b[k] - a[k]) || (b.posts - a.posts) || a.name.localeCompare(b.name));
+  companyTable($('#coTable'), list.slice(0, st.coLimit), { sortKey: k, onSort: key => { st.coKey = key; st.coSort = ''; st.coLimit = 25; render(); } });
+  $('#coMore').innerHTML = list.length > st.coLimit ? `<button type="button" class="btn" id="coMoreBtn">Show 25 more</button><span>Showing ${st.coLimit} of ${fmt(list.length)} companies</span>` : (list.length ? `<span>Showing all ${fmt(list.length)}</span>` : '');
+  const mb = $('#coMoreBtn'); if (mb) mb.onclick = () => { st.coLimit += 25; render(); };
+  let recPosts = 0, recN = 0, blank = 0;
+  cos.forEach(o => { if (o.rec) { recPosts += o.posts; recN++; } });
+  sel.rows.forEach(i => { if (!E.R.c[i]) blank += E.R.n[i]; });
+  $('#coNote').textContent = st.poster === 'recruiter' ? 'Showing recruiter and agency accounts only. Their volume says little about which employer is hiring.'
+    : (recN || blank) ? `Not ranked here: ${plural(recPosts, 'post')} from ${plural(recN, 'recruiter account')} and ${plural(blank, 'post')} that name no company. Pick Recruiters and agencies under Posted by to see the recruiters.` : '';
 }
 
-function renderCities(w) {
+function renderCities(rows) {
+  const list = E.cities(rows).slice(0, 10);
   $('#cities thead').innerHTML = '<tr><th>City</th><th>Posts</th><th>Share</th><th>Tech share</th><th>Remote</th></tr>';
-  $('#cities tbody').innerHTML = w.cities.slice(0, 10).map(c => `<tr style="cursor:default"><td>${esc(c.city)}</td><td>${fmt(c.posts)}</td><td>${c.share.toFixed(0)}%</td><td>${c.tech.toFixed(0)}%</td><td>${c.remote.toFixed(0)}%</td></tr>`).join('');
+  $('#cities tbody').innerHTML = list.length ? list.map(c => `<tr class="click ${c.y === st.city ? 'sel' : ''}" data-y="${c.y}"><td>${esc(c.city)}</td><td>${fmt(c.posts)}</td><td>${c.share.toFixed(0)}%</td><td>${c.techShare.toFixed(0)}%</td><td>${c.remoteShare.toFixed(0)}%</td></tr>`).join('') : '<tr><td colspan="5" class="muted">No posts match these filters.</td></tr>';
+  $('#cities tbody').querySelectorAll('tr.click').forEach(tr => tr.onclick = () => { st.city = st.city === +tr.dataset.y ? -1 : +tr.dataset.y; resetPaging(); render(); });
 }
 
+function renderMain() {
+  const f = filt(), sel = E.select(f), sum = E.summary(sel, f), cos = E.companies(sel.rows, f);
+  renderShowing(sum);
+  renderKPIs(sum);
+  renderBars($('#daily'), $('#xlab'), E.daily(sel.rows, f), d => `<b>${dayLabel(d.day)}</b><br>${plural(d.posts, 'post')} from ${nCos(d.companies)}<br>Tech ${fmt(d.tech)} · Sales ${fmt(d.sales)} · Remote ${fmt(d.remote)}<br><span style="opacity:.7">${statusText(d.status)}</span>`);
+  $('#tabSectors').setAttribute('aria-selected', st.tab === 'sectors'); $('#tabCompanies').setAttribute('aria-selected', st.tab === 'companies');
+  $('#paneSectors').hidden = st.tab !== 'sectors'; $('#paneCompanies').hidden = st.tab !== 'companies';
+  renderSectors(sel, f, cos);
+  renderCompanies(sel, f, cos);
+  renderCities(sel.rows);
+  const ai = E.aiBySector(sel.rows);
+  $('#aiSub').textContent = `${plural(ai.posts, 'post')} (${sum.posts ? (100 * ai.posts / sum.posts).toFixed(1) : 0}% of this selection) mention AI, machine learning or LLMs in the title. Where they sit:`;
+  barList($('#ai'), ai.sectors, { value: x => x[1], label: x => x[0], cls: x => x[0].startsWith('Other') ? 'g' : '' });
+  barList($('#titles'), E.breakdown(sel.rows).titles, { value: x => x[1], label: x => titleCase(x[0]), cls: 'g' });
+}
+
+/* ---------- company profile ---------- */
+function renderCompany() {
+  const f = filt(), p = E.profile(st.company, f), me = p.me;
+  $('#coName').innerHTML = esc(p.name) + (p.rec ? '<span class="tag" style="font-family:Inter,sans-serif;font-size:13px;vertical-align:8px">Recruiter or agency</span>' : '');
+  document.title = `${p.name} hiring in Pakistan · Pakistan Job Pulse`;
+  renderShowing(null);
+  const k = n => `<div class="kpi"><div class="l">${n[0]}</div><div class="v${n[3] ? ' sm' : ''}">${n[1]}</div><div class="h">${n[2]}</div></div>`;
+  if (!me) {
+    $('#coLede').textContent = `No posts from this company from ${rangeText()}. It has ${plural(p.ever, 'post')} in all tracked data, first seen ${shortDay(D(p.firstEver))}. Widen the period above to see them.`;
+    $('#coKpis').innerHTML = k(['Posts in this period', '0', `${p.scanDays} scan days`]) + k(['All tracked posts', fmt(p.ever), 'since tracking began']);
+    ['#coDaily', '#coXlab', '#coSectors', '#coLevels', '#coCities', '#coTitles', '#coRead'].forEach(s => $(s).innerHTML = '');
+    $('#coDailySub').textContent = ''; $('#coPeersH').textContent = 'Others hiring'; $('#coPeers thead').innerHTML = ''; $('#coPeers tbody').innerHTML = '';
+    return;
+  }
+  const pc = n => (100 * n / me.posts).toFixed(0) + '%';
+  $('#coLede').textContent = `${p.name} posted ${plural(me.posts, 'job')} on ${me.days} of ${p.scanDays} scan days from ${rangeText()}. Mostly ${me.sector}${me.cities[0] && me.cities[0] !== 'Unspecified' ? ', mostly in ' + me.cities[0] : ''}.`;
+  $('#coKpis').innerHTML = [
+    ['Posts', fmt(me.posts), `${fmt(p.ever)} in all tracked data`],
+    ['Days active', `${me.days}`, `of ${p.scanDays} scan days`],
+    ['First seen', shortDay(D(p.firstEver)), 'first post ever tracked', 1],
+    ['Latest post', shortDay(D(me.last)), 'in this period', 1],
+    ['Remote', pc(me.remote), `${fmt(me.remote)} of ${fmt(me.posts)} posts`],
+    ['Rank', '#' + fmt(p.rank), `of ${fmt(p.pool)} ${p.rec ? 'recruiters' : 'direct employers'}`],
+  ].map(k).join('');
+  $('#coDailySub').textContent = `New postings first seen each day, ${rangeText()}. Dashed columns are days with no scan.`;
+  renderBars($('#coDaily'), $('#coXlab'), p.daily, d => `<b>${dayLabel(d.day)}</b><br>${plural(d.posts, 'post')}<br><span style="opacity:.7">${statusText(d.status)}</span>`);
+  const peak = me.byDay[me.maxDay];
+  $('#coRead').textContent = me.tag === 'new' ? `New here: the first post we ever tracked from this company was on ${shortDay(D(me.firstEver))}.`
+    : me.tag === 'burst' ? `Burst hirer: ${peak} of ${me.posts} posts landed on one day (${shortDay(D(me.maxDay))}). That pattern usually means a batch hiring drive, not a steady stream.`
+    : me.tag === 'steady' ? `Steady hirer: posted on ${me.days} of ${p.scanDays} scan days. New roles keep appearing, so it is worth checking regularly.`
+    : `Occasional hirer: posted on ${me.days} of ${p.scanDays} scan days in this period.`;
+  barList($('#coSectors'), p.sectors, { value: x => x[1], label: x => x[0], cls: x => x[0].startsWith('Other') ? 'g' : '' });
+  barList($('#coLevels'), p.levels, { value: x => x[1], label: x => x[0], cls: 'g' });
+  $('#coCitySub').textContent = `Posts by city. ${pc(me.remote)} of posts are flagged remote and ${pc(me.entry)} are entry level.`;
+  barList($('#coCities'), p.cities, { value: x => x[1], label: x => x[0] });
+  const titles = p.titles.slice(0, 8).map(x => [titleCase(x[0]), x[1]]);
+  if (p.otherTitles) titles.push(['Other, less common titles', p.otherTitles, 1]);
+  barList($('#coTitles'), titles, { value: x => x[1], label: x => x[0], cls: x => x[2] ? 'g' : '' });
+  $('#coPeersH').textContent = `Others hiring in ${me.sector}`;
+  companyTable($('#coPeers'), p.peers, { showSector: false });
+}
+
+/* ---------- routing ---------- */
+function route() {
+  const h = location.hash || '#/';
+  st.company = -1;
+  if (h.startsWith('#/company/')) {
+    let name = ''; try { name = decodeURIComponent(h.slice(10)); } catch (e) {}
+    const ix = E.C.companies.findIndex((c, i) => i > 0 && c[0] === name);
+    if (ix > 0) st.company = ix; else { location.replace('#/companies'); return; }
+  } else st.tab = h.startsWith('#/companies') ? 'companies' : 'sectors';
+}
 function render() {
-  const w = S.windows[W] || S.windows['30d'];
-  renderWindowButtons();
-  renderKPIs(w);
-  renderDaily();
-  renderCompass(w);
-  renderEmployers(w);
-  barList($('#remote'), w.remote_employers.slice(0, 12), {
-    value: e => e.remote, label: e => e.name, sub: e => e.sector,
-    tipf: e => `<b>${esc(e.name)}</b><br>${fmt(e.remote)} of ${fmt(e.posts)} posts remote`,
-  });
-  renderCities(w);
-  $('#aiSub').textContent = `${fmt(w.ai.posts)} posts (${w.ai.share.toFixed(1)}% of all) mention AI, machine learning or LLMs in the title. Where they sit:`;
-  barList($('#ai'), w.ai.sectors, { value: x => x[1], label: x => x[0], cls: x => x[0].startsWith('Other') ? 'g' : '' });
-  barList($('#newcos'), S.newcomers.slice(0, 10), { value: x => x.posts, label: x => x.name, sub: x => x.sector,
-    tipf: x => `<b>${esc(x.name)}</b><br>${x.posts} posts since ${dayLabel(x.first)}` });
-  barList($('#recruiters'), w.recruiters.slice(0, 10), { value: x => x.posts, label: x => x.name, cls: 'g' });
-  barList($('#titles'), w.titles.slice(0, 15), { value: x => x[1], label: x => titleCase(x[0]), cls: 'g' });
+  document.body.classList.toggle('company', st.company >= 0);
+  renderFilters(); syncControls();
+  if (st.company >= 0) renderCompany(); else { document.title = 'Pakistan Job Pulse'; renderMain(); }
   $('#updated').textContent = `Data through ${dayLabel(S.last_day)} · ${fmt(S.total_posts)} posts since ${dayLabel(S.first_day)}`;
 }
 
 // theme toggle: cycles system, light, dark
 (function () {
-  const btn = $('#theme'); const order = ['system', 'light', 'dark'];
+  const btns = document.querySelectorAll('[data-theme-btn]'); const order = ['system', 'light', 'dark'];
   let t = STORE.get('pulse.theme') || 'system';
-  const apply = () => { if (t === 'system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); btn.textContent = 'Theme: ' + t; };
-  btn.onclick = () => { t = order[(order.indexOf(t) + 1) % 3]; STORE.set('pulse.theme', t); apply(); };
+  const apply = () => { if (t === 'system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); btns.forEach(b => b.textContent = 'Theme: ' + t); };
+  btns.forEach(b => b.onclick = () => { t = order[(order.indexOf(t) + 1) % 3]; STORE.set('pulse.theme', t); apply(); });
   apply();
 })();
 
 fetch('data/stats.json', { cache: 'no-cache' }).then(r => r.json()).then(d => {
-  S = d; const saved = STORE.get('pulse.win'); if (saved && S.windows[saved]) W = saved; render();
-}).catch(() => { $('#kpis').innerHTML = '<p class="muted">Could not load the statistics file.</p>'; });
+  S = d; E = makeEngine(S);
+  const saved = STORE.get('pulse.win');
+  setPreset(saved && (['7d', '30d', 'all'].includes(saved) || S.months.includes(saved)) ? saved : '30d');
+  initFilterControls();
+  let prevCompany = -1;
+  const go = () => { route(); render(); if ((st.company >= 0) !== (prevCompany >= 0) || st.company !== prevCompany) scrollTo(0, 0); prevCompany = st.company; };
+  addEventListener('hashchange', go);
+  route(); prevCompany = st.company; render();
+}).catch(err => { console.error(err); $('#kpis').innerHTML = '<p class="muted">Could not load the statistics file.</p>'; });
 </script>
 </body>
 </html>
